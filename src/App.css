@@ -1,0 +1,270 @@
+#app {
+  width: 100%;
+  padding: 18px 16px 26px;
+  box-sizing: border-box;
+}
+
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 4px 22px;
+}
+
+#brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+#mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow);
+  color: var(--accent);
+  font-size: 18px;
+}
+
+#subtitle {
+  opacity: 0.8;
+  font-size: 14px;
+  margin-top: -8px;
+}
+
+#segmented {
+  display: flex;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(127, 127, 127, 0.04);
+}
+
+.seg {
+  border: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.seg.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-border) inset;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(127, 127, 127, 0.03);
+  box-shadow: var(--shadow);
+  padding: 18px 16px;
+  text-align: left;
+}
+
+.card h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+label {
+  font-weight: 650;
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+input[type='password'],
+input[type='text'],
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 10px 12px;
+  color: var(--text-h);
+  outline: none;
+  font-size: 15px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+input:focus,
+textarea:focus {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px rgba(170, 59, 255, 0.15);
+}
+
+.file {
+  width: 100%;
+  border: 1.5px dashed rgba(170, 59, 255, 0.35);
+  background: rgba(170, 59, 255, 0.06);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+}
+
+.file input {
+  display: none;
+}
+
+.file span {
+  color: var(--text-h);
+  font-weight: 650;
+}
+
+.file .hint {
+  font-weight: 500;
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+.preview {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(127, 127, 127, 0.03);
+}
+
+.previewLabel {
+  font-weight: 700;
+  margin: 8px 12px 6px;
+  opacity: 0.9;
+}
+
+.preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.emptyPreview {
+  opacity: 0.7;
+  padding: 12px 0;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-h);
+  padding: 11px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.btn:hover {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px rgba(170, 59, 255, 0.12);
+}
+
+.btn.primary {
+  border-color: transparent;
+  background: var(--accent-bg);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-border) inset;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.alert {
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 10px 0 2px;
+  font-weight: 650;
+}
+
+.alert.error {
+  border: 1px solid rgba(255, 74, 74, 0.45);
+  background: rgba(255, 74, 74, 0.08);
+  color: #ff6b6b;
+}
+
+.metaRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.metaChip {
+  border: 1px solid var(--border);
+  background: rgba(127, 127, 127, 0.03);
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-size: 13px;
+  opacity: 0.95;
+}
+
+.meta {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.metaLine {
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+#footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  opacity: 0.8;
+  font-size: 14px;
+}
+
