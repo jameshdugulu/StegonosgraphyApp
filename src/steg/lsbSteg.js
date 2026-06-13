@@ -23,15 +23,22 @@ function bytesToUtf8(bytes) {
   return new TextDecoder().decode(bytes);
 }
 
-function bytesXorKeystream(bytes, passphrase) {
-  if (!passphrase) return bytes;
+function bytesXorKeystreamFromKeyId(bytes, keyId) {
+  // keyId: 0..7 (8 built-in keys)
+  if (keyId === null || keyId === undefined) return bytes;
 
-  // Deterministic 32-bit FNV-1a hash from passphrase as PRNG seed.
-  let h = 0x811c9dc5;
-  for (let i = 0; i < passphrase.length; i++) {
-    h ^= passphrase.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
+  const id = Number(keyId);
+  if (!Number.isInteger(id) || id < 0 || id > 7) {
+    throw new Error('Invalid built-in key selection.');
   }
+
+  // Deterministic seed per keyId (no user-provided secret).
+  // Use a simple hash-mix to spread seeds.
+  let h = 0x811c9dc5;
+  h ^= id;
+  h = Math.imul(h, 0x01000193);
+  h ^= (id * 0x9e3779b9) >>> 0;
+  h >>>= 0;
 
   const out = new Uint8Array(bytes.length);
 
@@ -52,10 +59,11 @@ function bytesXorKeystream(bytes, passphrase) {
   return out;
 }
 
-function buildPacket(messageBytes, passphraseProvided) {
-  const flags = passphraseProvided ? 0x01 : 0x00;
 
-  // payloadBytes are already XOR’d if passphraseProvided.
+function buildPacket(messageBytes, keyIdProvided) {
+  const flags = keyIdProvided !== null && keyIdProvided !== undefined ? 0x01 : 0x00;
+
+  // payloadBytes are already XOR’d if keyIdProvided.
   const header = new Uint8Array(8 + 1 + 1 + 4);
   header.set(MAGIC, 0);
   header[8] = VERSION;
@@ -72,6 +80,7 @@ function buildPacket(messageBytes, passphraseProvided) {
   packet.set(messageBytes, header.length);
   return packet;
 }
+
 
 function getCapacityBytes(imageData) {
   // Each RGBA byte holds 1 bit in its LSB.
@@ -130,11 +139,12 @@ async function loadImageFromFile(file) {
   }
 }
 
-export async function encodeTextToImage({ imageFile, message, passphrase = '' }) {
+export async function encodeTextToImage({ imageFile, message, keyId = null }) {
   if (!imageFile) throw new Error('Please provide an image file');
   if (typeof message !== 'string') throw new Error('Message must be a string');
 
   const img = await loadImageFromFile(imageFile);
+
 
   const canvas = document.createElement('canvas');
   canvas.width = img.naturalWidth;
@@ -148,12 +158,14 @@ export async function encodeTextToImage({ imageFile, message, passphrase = '' })
   const { capacityBytes } = getCapacityBytes(imageData);
 
   const messageBytesUtf8 = utf8ToBytes(message);
-  const usePass = passphrase.trim().length > 0;
-  const payloadBytes = usePass
-    ? bytesXorKeystream(messageBytesUtf8, passphrase.trim())
+
+  const useKey = keyId !== null && keyId !== undefined;
+  const payloadBytes = useKey
+    ? bytesXorKeystreamFromKeyId(messageBytesUtf8, keyId)
     : messageBytesUtf8;
 
-  const packet = buildPacket(payloadBytes, usePass);
+  const packet = buildPacket(payloadBytes, useKey);
+
 
   if (packet.length > capacityBytes) {
     // packet includes header + payload.
@@ -192,13 +204,17 @@ export async function encodeTextToImage({ imageFile, message, passphrase = '' })
       capacityBytes,
       embeddedBytes: packet.length,
       messageBytes: messageBytesUtf8.length,
-      usedPassphrase: usePass
+      usedBuiltInKey: useKey,
+      keyId: useKey ? Number(keyId) : null
+
     }
   };
 }
 
-export async function decodeTextFromImage({ imageFile, passphrase = '' }) {
+export async function decodeTextFromImage({ imageFile, keyId = null }) {
   if (!imageFile) throw new Error('Please provide an image file');
+
+
 
   const img = await loadImageFromFile(imageFile);
   const canvas = document.createElement('canvas');
@@ -233,7 +249,8 @@ export async function decodeTextFromImage({ imageFile, passphrase = '' }) {
   }
 
   const flags = headerBytes[9];
-  const usedPassphrase = (flags & 0x01) === 0x01;
+  const usedBuiltInKey = (flags & 0x01) === 0x01;
+
 
   const len =
     (headerBytes[10] << 24) |
@@ -257,13 +274,13 @@ export async function decodeTextFromImage({ imageFile, passphrase = '' }) {
   const payloadBytes = bitsToBytes(payloadBits);
 
   let messageBytes = payloadBytes;
-  if (usedPassphrase) {
-    const key = passphrase.trim();
-    if (!key) {
-      throw new Error('This payload is protected by a passphrase. Please provide it to decode.');
+  if (usedBuiltInKey) {
+    if (keyId === null || keyId === undefined) {
+      throw new Error('This payload is protected by a built-in key. Please select the correct key to decode.');
     }
-    messageBytes = bytesXorKeystream(payloadBytes, key);
+    messageBytes = bytesXorKeystreamFromKeyId(payloadBytes, keyId);
   }
+
 
   let message;
   try {
@@ -278,7 +295,9 @@ export async function decodeTextFromImage({ imageFile, passphrase = '' }) {
       width: canvas.width,
       height: canvas.height,
       payloadBytes: payloadLen,
-      usedPassphrase
+      usedBuiltInKey,
+      keyId: usedBuiltInKey ? Number(keyId) : null
+
     }
   };
 }

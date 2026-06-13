@@ -27,7 +27,8 @@ export default function App() {
   const [embedFile, setEmbedFile] = useState(null);
   const [embedPreviewUrl, setEmbedPreviewUrl] = useState('');
   const [message, setMessage] = useState('');
-  const [passphrase, setPassphrase] = useState('');
+  const [keyId, setKeyId] = useState(null); // null = no built-in key
+
   const [embedBusy, setEmbedBusy] = useState(false);
   const [embedError, setEmbedError] = useState('');
   const [embedMeta, setEmbedMeta] = useState(null);
@@ -37,7 +38,8 @@ export default function App() {
   // Extract state
   const [extractFile, setExtractFile] = useState(null);
   const [extractPreviewUrl, setExtractPreviewUrl] = useState('');
-  const [extractPassphrase, setExtractPassphrase] = useState('');
+  const [extractKeyId, setExtractKeyId] = useState(null);
+
   const [extractBusy, setExtractBusy] = useState(false);
   const [extractError, setExtractError] = useState('');
   const [extractedMessage, setExtractedMessage] = useState('');
@@ -88,8 +90,9 @@ export default function App() {
       const { stegoBlob: blob, meta } = await encodeTextToImage({
         imageFile: embedFile,
         message,
-        passphrase
+        keyId
       });
+
 
       const stegoUrl = URL.createObjectURL(blob);
       setStegoBlob(blob);
@@ -113,8 +116,9 @@ export default function App() {
 
       const { message: decoded, meta } = await decodeTextFromImage({
         imageFile: extractFile,
-        passphrase: extractPassphrase
+        keyId: extractKeyId
       });
+
 
       setExtractedMessage(decoded);
       setExtractMeta(meta);
@@ -194,7 +198,8 @@ export default function App() {
 
               <div className="metaRow">
                 <div className="metaChip">Message size: <span>{messageBytesEst ?? '-'}</span> bytes</div>
-                <div className="metaChip">Passphrase: <span>{passphrase.trim() ? 'Yes' : 'No'}</span></div>
+                <div className="metaChip">Built-in key: <span>{keyId === null ? 'None' : `#${keyId + 1}`}</span></div>
+
               </div>
             </section>
 
@@ -212,14 +217,23 @@ export default function App() {
               </div>
 
               <div className="field">
-                <label>Passphrase (optional)</label>
-                <input
-                  value={passphrase}
-                  onChange={(e) => setPassphrase(e.target.value)}
-                  type="password"
-                  placeholder="Adds XOR protection"
-                />
+                <label>Built-in key (optional)</label>
+                <select
+                  value={keyId === null ? '' : String(keyId)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setKeyId(v === '' ? null : Number(v));
+                  }}
+                >
+                  <option value="">None</option>
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <option key={i} value={i}>
+                      Key #{i + 1}
+                    </option>
+                  ))}
+                </select>
               </div>
+
 
               {embedError ? <div className="alert error">{embedError}</div> : null}
 
@@ -251,7 +265,11 @@ export default function App() {
                   <div className="metaLine"><b>Image:</b> {embedMeta.width}×{embedMeta.height}</div>
                   <div className="metaLine"><b>Embedded:</b> {formatBytes(embedMeta.embeddedBytes)}</div>
                   <div className="metaLine"><b>Payload bytes:</b> {embedMeta.messageBytes}</div>
-                  <div className="metaLine"><b>Protected:</b> {embedMeta.usedPassphrase ? 'Yes' : 'No'}</div>
+                  <div className="metaLine"><b>Protected:</b> {embedMeta.usedBuiltInKey ? 'Yes' : 'No'}</div>
+                  {embedMeta.usedBuiltInKey ? (
+                    <div className="metaLine"><b>Key:</b> #{embedMeta.keyId + 1}</div>
+                  ) : null}
+
                 </div>
               ) : null}
 
@@ -299,13 +317,22 @@ export default function App() {
               <h2>2) Extract message</h2>
 
               <div className="field">
-                <label>Passphrase (if used during embed)</label>
-                <input
-                  value={extractPassphrase}
-                  onChange={(e) => setExtractPassphrase(e.target.value)}
-                  type="password"
-                  placeholder="Leave empty if none"
-                />
+                <label>Built-in key (if used during embed)</label>
+                <select
+                  value={extractKeyId === null ? '' : String(extractKeyId)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setExtractKeyId(v === '' ? null : Number(v));
+                  }}
+                >
+                  <option value="">None</option>
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <option key={i} value={i}>
+                      Key #{i + 1}
+                    </option>
+                  ))}
+                </select>
+
               </div>
 
               {extractError ? <div className="alert error">{extractError}</div> : null}
@@ -325,7 +352,11 @@ export default function App() {
                 <div className="meta" style={{ marginTop: 12 }}>
                   <div className="metaLine"><b>Image:</b> {extractMeta.width}×{extractMeta.height}</div>
                   <div className="metaLine"><b>Payload bytes:</b> {extractMeta.payloadBytes}</div>
-                  <div className="metaLine"><b>Protected:</b> {extractMeta.usedPassphrase ? 'Yes' : 'No'}</div>
+                  <div className="metaLine"><b>Protected:</b> {extractMeta.usedBuiltInKey ? 'Yes' : 'No'}</div>
+                  {extractMeta.usedBuiltInKey ? (
+                    <div className="metaLine"><b>Key:</b> #{extractMeta.keyId + 1}</div>
+                  ) : null}
+
                 </div>
               ) : null}
 
